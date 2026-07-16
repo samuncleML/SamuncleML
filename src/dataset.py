@@ -1,24 +1,23 @@
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import PIL.Image as Image
 import torch
 import pandas as pd
 import numpy as np
+import os
 
+BASE_PATH = os.getcwd()
 
 transform = transforms.Compose([
     transforms.RandomAdjustSharpness(1.5),
     transforms.RandomHorizontalFlip(),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
     transforms.RandomRotation(15),
-    transforms.RandomResizedCrop((224, 224), scale=(0.2, 1.0)),
+    transforms.RandomResizedCrop((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize((0.42636684, 0.48088259, 0.34474218), (0.18698326, 0.18891238, 0.18710552))
+    transforms.Normalize((0.426, 0.481, 0.344), (0.182, 0.184, 0.181))
     ])
 
-tt = torch.tensor
-
-class DropDiseaseDataset(Dataset):
+class CropDiseaseDataset(Dataset):
     def __init__(self, csv_file: str, transform=None):
         super().__init__()
         df = pd.read_csv(csv_file)
@@ -26,8 +25,6 @@ class DropDiseaseDataset(Dataset):
         self.transform = transform
         self.disease_to_idx = {name: i for i, name in enumerate(np.unique(self.data[:, 1]))}
         self.plant_to_idx = {name: i for i, name in enumerate(np.unique(self.data[:, 0]))}
-        print(self.disease_to_idx.keys())
-        print(self.plant_to_idx.keys())
 
     def __len__(self):
         return len(self.data)
@@ -39,11 +36,13 @@ class DropDiseaseDataset(Dataset):
         disease_type = self.disease_to_idx[self.data[index, 1]]
         if image:
             image = self.transform(image)
-        return image, tt(crop_type), tt(disease_type)
+        return image, torch.tensor(crop_type), torch.tensor(disease_type)
 
-leaves = DropDiseaseDataset('./crop_disease_labels.csv', transform=transform)
-len_train = int(0.25*len(leaves))
-len_val = len(leaves) - len_train
-train_data, val_data = random_split(leaves, lengths=[len_train, len_val])
+
+train_data = CropDiseaseDataset(os.path.join(BASE_PATH, 'data/train.csv'), transform=transform)
+test_data = CropDiseaseDataset(os.path.join(BASE_PATH, 'data/test.csv'), transform=transform)
+val_data = CropDiseaseDataset(os.path.join(BASE_PATH, 'data/val.csv'), transform=transform)
+
 train_loader = DataLoader(train_data, batch_size=30, shuffle=True, pin_memory=True)
-val_loader = DataLoader(val_data, batch_size=20)
+test_loader = DataLoader(test_data, batch_size=32)
+val_loader = DataLoader(val_data, batch_size=32)

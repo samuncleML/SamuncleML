@@ -1,8 +1,7 @@
 import torch
 from PIL import Image
-from Module import PlantDiseaseModel
+from module import PlantDiseaseModel
 from torchvision import transforms
-import cv2
 
 class PredictPlantDisease:
     def __init__(self, image_path: str, model_path : str,  plant_classes: list, disease_classes: list):
@@ -12,35 +11,21 @@ class PredictPlantDisease:
         self.image_path = image_path
 
         self.transforms = transforms.Compose([
-            transforms.RandomAdjustSharpness(1.5),
-            transforms.RandomHorizontalFlip(),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-            transforms.RandomRotation(15),
-            transforms.RandomResizedCrop((320, 320), scale=(0.2, 1.0)),
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize((0.432, 0.463, 0.381), (0.175, 0.166, 0.187))
+            transforms.Normalize((0.426, 0.481, 0.344), (0.182, 0.184, 0.181))
         ])
     
     def _load_model(self, model_path):
-        model = PlantDiseaseModel(5, 17)
+        model = PlantDiseaseModel(6, 27)
         model.load_state_dict(torch.load(model_path))
         model.eval()
         return model
     
-    def preprocess(self, image_path):
+    def _preprocess(self, image_path):
         image = Image.open(image_path).convert('RGB')
         image = self.transforms(image).unsqueeze(0)
         return image
-    
-    def run_model(self):
-        image_tensor = self.preprocess(image_path=self.image_path)
-
-        with torch.no_grad():
-            plant_outputs, disease_outputs = self.model(image_tensor)
-            plant_probs = torch.softmax(plant_outputs, dim=1)
-            disease_probs = torch.softmax(disease_outputs, dim=1)
-        
-        return self._format_results(plant_probs, disease_probs)
     
     def _format_results(self, p_probs, d_probs):
         plant_idx = torch.argmax(p_probs)
@@ -58,9 +43,18 @@ class PredictPlantDisease:
             'status':'success', 'plant':plant_name, 'disease':disease_name,
             'confidence':{'plant':plant_confidence, 'disease':disease_confidence}
         }
+    def run_model(self):
+        image_tensor = self._preprocess(image_path=self.image_path)
 
-image_path = r"C:\Users\Administrator\Downloads\download (4).jpg"
-model_path = r'C:\Users\Administrator\Documents\Project\multi_head_plant_disease.pth'
+        with torch.no_grad():
+            plant_outputs, disease_outputs = self.model(image_tensor)
+            plant_probs = torch.softmax(plant_outputs, dim=1)
+            disease_probs = torch.softmax(disease_outputs, dim=1)
+        
+        return self._format_results(plant_probs, disease_probs)
+    
+image_path = r"C:\Users\Administrator\Downloads\download (5).jpg"
+model_path = r"C:\Users\Administrator\Documents\plant-disease-multhead\plant_disease_model (1).pth"
 plant_classes = ['Cassava', 'Cocoa', 'Corn', 'Cowpea', 'Unknown']
 disease_classes = ['Bacterial wilt', 'Cercospora_leaf_spot Gray_leaf_spot', 'Common_rust_', 
                    'Healthy Cassava', 'Healthy Cocoa', 'Healthy Corn', 'Healthy Cowpea', 
