@@ -55,7 +55,7 @@ Evaluated on a held-out test set emphasizing real-world field conditions, the du
 
 ## Dataset & Domain Adaptation
 
-To bridge the **lab-to-field domain gap**—where models trained solely on uniform laboratory backgrounds fail under real agricultural conditions—our training pipeline utilizes a curated corpus of approximately **43,000 images** prioritized for in-field variance.
+To bridge the **lab-to-field domain gap** where models trained solely on uniform laboratory backgrounds fail under real agricultural conditions our training pipeline utilizes a curated corpus of approximately **43,000 images** prioritized for in-field variance.
 
 ### Target Crops Covered
 1. **Cassava** (*Manihot esculenta*)
@@ -112,7 +112,7 @@ python export/convert_tflite.py --weights checkpoints/mobilenetv3_multihead.pth 
 ## Future Work
 
 * **Knowledge-Informed Machine Learning (KIML):** Integrating a *Biological Constraint Layer* into the output logits to mask biologically impossible host–pathogen pairs (e.g., preventing a cassava disease prediction on a maize leaf).
-* **Multi-Input Multi-Output (MIMO) Fusion:** Incorporating multimodal tabular metadata—such as ambient humidity, temperature, soil pH, and geolocation—to refine disease probability priors.
+* **Multi-Input Multi-Output (MIMO) Fusion:** Incorporating multimodal tabular metadata such as ambient humidity, temperature, soil pH, and geolocation to refine disease probability priors.
 * **Agronomic Prescription Engine:** Mapping calibrated confidence scores to localized, sustainable intervention protocols (organic and chemical treatment recommendations).
 
 ---
